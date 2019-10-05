@@ -1,0 +1,331 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>n-Body</title>
+    <script type="text/javascript">
+
+        var balls = [];
+
+        var stepInterval;
+
+        var G;
+
+        var ballR = 10;
+
+        var isStarted;
+
+        function btnPrepare_Click() {
+
+            if (isStarted) {
+
+                alert("已经在演示中，请先停止再重新开始。");
+                return;
+            }
+
+            clearCurrent();
+
+            var paraStr = document.getElementById("txtPara").value;
+
+            var arr = paraStr.split(";");
+
+            balls = [];
+
+            for (let i = 0; i < arr.length; i++) {
+
+                let ballStr = arr[i].trim();
+
+                if (ballStr == "")
+                    continue;
+
+                try {
+                    balls[i] = ParseBall(arr[i]);
+                }
+                catch (e) {
+                    alert(e);
+                    return;
+                }
+                
+            }
+
+            G = parseFloat(document.getElementById("txtG").value);
+
+            if (isNaN(G))
+            {
+                alert("G 应填写数字 。");
+                return;
+            }
+
+            stepInterval = parseFloat(document.getElementById("txtStepInterval").value);
+
+            if (isNaN(stepInterval))
+            {
+                alert("步进周期 应填写数字 。");
+                return;
+            }
+
+            if (stepInterval < 1)
+            {
+                alert("步进周期 应大于 1 。");
+                return;
+            }
+
+            draw();
+        }
+
+        function ParseBall(ballStr) {
+
+            var arr = ballStr.split(",");
+
+            if (arr.length < 6)
+                throw "“" + ballStr + "” 中用 逗号 , 隔开的参数只有 " + arr.length + " 个，应该有 颜色、质量、初始位置x、初始位置y、x方向初始速度、y方向初始速度 6 个参数 。";
+
+            var ball = new Object();
+
+            ball.color = arr[0];
+
+            var m = arr[1];
+            var x = arr[2];
+            var y = arr[3];
+            var v_x = arr[4];
+            var v_y = arr[5];
+
+            ball.m = parseFloat(m);
+            ball.x = parseFloat(x);
+            ball.y = parseFloat(y);
+            ball.v_x = parseFloat(v_x);
+            ball.v_y = parseFloat(v_y);
+
+            if (isNaN(ball.m))
+            {
+                throw "“" + m + "” 不是数字 。";
+            }
+            if (isNaN(ball.x))
+            {
+                throw "“" + x + "” 不是数字 。";
+            }
+            if (isNaN(ball.y))
+            {
+                throw "“" + y + "” 不是数字 。";
+            }
+            if (isNaN(ball.v_x))
+            {
+                throw "“" + v_x + "” 不是数字 。";
+            }
+            if (isNaN(ball.v_y))
+            {
+                throw "“" + v_y + "” 不是数字 。";
+            }
+
+            return ball;
+        }
+
+        function btnStart_Click() {
+
+            if (isStarted) {
+
+                alert("已经在演示中。");
+
+                return;
+            }
+
+            isStarted = true;
+
+            nextFrame();
+        }
+
+        function btnStop_Click() {
+
+            isStarted = false;
+        }
+
+        function nextFrame() {
+
+            if (!isStarted)
+                return;
+
+            try {
+                calculate();
+            }
+            catch (e) {
+                if (e.hit) {
+
+                    clearBall(e.ball.x, e.ball.y);
+                    clearBall(e.ball2.x, e.ball2.y);
+                    alert(e.msg);
+                }
+                else {
+                    throw e;
+                }
+                    
+            }
+
+            clearOld();
+
+            draw();
+
+            window.setTimeout(nextFrame, stepInterval);
+        }
+
+        function calculate() {
+
+            for (let i = 0; i < balls.length; i++) {
+
+                let ball = balls[i];
+
+                if (ball.hit)
+                    continue;
+
+                calculateBall(ball);
+            }
+
+            for (let i = 0; i < balls.length; i++) {
+
+                let ball = balls[i];
+
+                if (ball.hit)
+                    continue;
+
+                ball.old_x = ball.x;
+                ball.old_y = ball.y;
+
+                ball.x = ball.new_x;
+                ball.y = ball.new_y;
+            }
+        }
+
+         function calculateBall(ball) {
+
+             let dt = stepInterval / 1000;
+
+             for (let i = 0; i < balls.length; i++) {
+
+                 let ball2 = balls[i];
+
+                 if (ball2 == ball || ball2.hit)
+                     continue;
+
+                 var l = Math.sqrt(Math.pow((ball2.x - ball.x), 2) + Math.pow((ball2.y - ball.y), 2));
+
+                 if (l < 20) {
+
+                     ball.hit = true;
+                     ball2.hit = true;
+
+                     throw { hit: true, msg: ball.color + " 和 " + ball2.color + " 相撞 。", ball: ball, ball2: ball2 };
+                 }
+
+                 let f = G * ball.m * ball2.m / Math.pow(l, 2);
+
+                 let f_x = f * (ball2.x - ball.x) / l;
+                 let f_y = f * (ball2.y - ball.y) / l;       
+
+                 let dv_x = (f_x / ball.m) * dt;
+                 let dv_y = (f_y / ball.m) * dt;
+          
+                 ball.v_x += dv_x;
+                 ball.v_y += dv_y;
+
+             }
+
+             let dx = ball.v_x * dt;
+             let dy = ball.v_y * dt;
+ 
+             ball.new_x = ball.x + dx;
+             ball.new_y = ball.y + dy;
+             
+         }
+
+        function clearCurrent() {
+
+            for (let i = 0; i < balls.length; i++) {
+
+                let ball = balls[i];
+
+                 if (ball.hit)
+                    continue;
+
+                clearBall(ball.x, ball.y);
+            }
+        }
+
+        function clearOld() {
+
+            for (let i = 0; i < balls.length; i++) {
+
+                let ball = balls[i];
+
+                 if (ball.hit)
+                    continue;
+
+                clearBall(ball.old_x, ball.old_y);
+            }
+        }
+
+        function clearBall(x, y) {
+
+            var canvas =document.getElementById("myCanvas");
+            var context = canvas.getContext("2d");
+
+            var d = ballR * 2 + 2;
+
+            context.clearRect(x - ballR - 1, y - ballR - 1, d, d);
+        }
+
+        function draw() {
+
+            for (let i = 0; i < balls.length; i++) {
+
+                let ball = balls[i];
+
+                if (ball.hit)
+                    continue;
+
+                drawBall(ball.x, ball.y, ballR, ball.color);
+            }
+        }
+
+        function drawBall(x, y, r, color) {
+
+            var canvas =document.getElementById("myCanvas");
+			var context= canvas.getContext("2d");
+            context.fillStyle = color;
+			context.beginPath();
+			context.arc(x,y,r,Math.PI*2,0,true);
+			context.closePath();
+            context.fill();
+        }
+
+        function btnCanvasSize_Click() {
+
+            var canvas = document.getElementById("myCanvas");
+
+            var width = parseFloat(document.getElementById("txtCanvasWidth").value);
+            var height = parseFloat(document.getElementById("txtCanvasHeight").value);
+
+            canvas.width = width;
+            canvas.height = height;
+        }
+    </script>
+</head>
+<body>
+    在下面的 文本框 中填写 初始参数，如下， 默认的参数是 6 个质点，质点之间用 英文分号 ; 隔开， 质点的参数之间用 英文逗号 , 隔开，<br />
+    质点参数 按顺序 分别是： 颜色、 质量、 初始位置x坐标、 初始位置y坐标、 初始速度x分量、 初始速度y分量<br />
+    颜色 是 Html Css 值，可以参考这里： <a href="https://www.runoob.com/cssref/css-colors-legal.html" target="_blank">https://www.runoob.com/cssref/css-colors-legal.html</a><br />
+    质量 单位 千克， 坐标 单位 像素， 速度 单位 像素/秒<br />
+    演示画面 坐标系 是 以 左上角 为 原点 的， x 轴 正方向 是 向右， y 轴 正方向 是 向下
+    <br />
+    <textarea id="txtPara" style="width:1000px; height:200px">red, 10, 300, 200, -10, -10; blue, 20, 500, 200, 0, -40; green, 10, 700, 200, 50, -20; 
+yellow, 10, 300, 350, -40, 20; orange, 20, 500, 350, -20, 50; brown, 10, 700, 350, 30, 40</textarea><br />
+    万有引力常量 G： <input id="txtG" value="10000" /> 牛 * 米平方 / 千克平方<br />
+    步进周期： <input id="txtStepInterval" value="200" /> 毫秒 &nbsp;&nbsp;&nbsp;&nbsp; 步进周期 表示 每隔多长时间计算一次 质点 位置速度 并 显示一帧， 所以， 步进周期 也表示 微分时间 dt， 步进周期 越小， 精度越高， 模拟的 质点轨迹 越接近 理论情形， 步进周期 太大 会造成 模拟效果 脱离 理论情形 。 质点速度越大，步进周期应该越小，才能保持精度 。 如果 质点速度很大 而 步进周期 不够小 则会 显著降低精度 和 脱离 理论情形 。<br />
+    <br />
+    <input type="button" value="预备" onclick="btnPrepare_Click();" style="width:200px" />
+    <input type="button" value="开始" onclick="btnStart_Click();" style="width:200px" />
+    <input type="button" value="停止" onclick="btnStop_Click();" style="width:200px" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 停止后可以点 开始 继续
+    <br /><br />
+    演示画面大小： <input id="txtCanvasWidth" value="2000" /> 像素 × <input id="txtCanvasHeight" value="2000" /> 像素 <input type="button" value="确定" onclick="btnCanvasSize_Click();" /><br />
+    <canvas id="myCanvas" width="2000" height="2000" style="border: 1px solid;"></canvas>
+</body>
+</html>
