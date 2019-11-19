@@ -319,7 +319,7 @@
     <textarea id="txtPara" style="width:1000px; height:200px">red, 10, 300, 200, -10, -10; blue, 20, 500, 200, 0, -40; green, 10, 700, 200, 50, -20; 
 yellow, 10, 300, 350, -40, 20; orange, 20, 500, 350, -20, 50; brown, 10, 700, 350, 30, 40</textarea><br />
     万有引力常量 G： <input id="txtG" value="10000" /> 牛 * 米平方 / 千克平方<br />
-    步进周期： <input id="txtStepInterval" value="200" /> 毫秒 &nbsp;&nbsp;&nbsp;&nbsp; 步进周期 表示 每隔多长时间计算一次 质点 位置速度 并 显示一帧， 所以， 步进周期 也表示 微分时间 dt， 步进周期 越小， 精度越高， 模拟的 质点轨迹 越接近 理论情形， 步进周期 太大 会造成 模拟效果 脱离 理论情形 。 质点速度越大，步进周期应该越小，才能保持精度 。 如果 质点速度很大 而 步进周期 不够小 则会 显著降低精度 和 脱离 理论情形 。<br />
+    步进周期： <input id="txtStepInterval" value="10" /> 毫秒 &nbsp;&nbsp;&nbsp;&nbsp; 步进周期 表示 每隔多长时间计算一次 质点 位置速度 并 显示一帧， 所以， 步进周期 也表示 微分时间 dt， 步进周期 越小， 精度越高， 模拟的 质点轨迹 越接近 理论情形， 步进周期 太大 会造成 模拟效果 脱离 理论情形 。 质点速度越大，步进周期应该越小，才能保持精度 。 如果 质点速度很大 而 步进周期 不够小 则会 显著降低精度 和 脱离 理论情形 。<br />
     <br />
     <input type="button" value="预备" onclick="btnPrepare_Click();" style="width:200px" />
     <input type="button" value="开始" onclick="btnStart_Click();" style="width:200px" />
